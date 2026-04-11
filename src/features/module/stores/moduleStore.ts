@@ -293,7 +293,8 @@ export const useModuleStore = create<RootState>((set, get) => {
         dateTime: epochMsNow(),
       });
 
-      set((s) => patch(s, moduleId, (cur) => ({ messages: [...cur.messages, msg] })));
+      // Upsert by _id so this stays idempotent with the socket echo event.
+      get().upsertIncomingMessage(moduleId, msg);
       return msg;
     },
 
@@ -331,7 +332,8 @@ export const useModuleStore = create<RootState>((set, get) => {
             pinned: 0,
             dateTime: now,
           });
-          set((s) => patch(s, moduleId, (cur) => ({ messages: [...cur.messages, msg] })));
+          // Upsert by _id so this stays idempotent with the socket echo.
+          get().upsertIncomingMessage(moduleId, msg);
         } catch (err) {
           console.error('submitPollVote to admin failed', adminId, err);
         }
@@ -351,7 +353,9 @@ export const useModuleStore = create<RootState>((set, get) => {
         pinned: 0,
         dateTime: now,
       });
-      set((s) => patch(s, moduleId, (cur) => ({ messages: [...cur.messages, msg] })));
+      // Upsert by _id so the sender's own socket echo (chat:new event for
+      // the same message) doesn't produce a duplicate bubble.
+      get().upsertIncomingMessage(moduleId, msg);
       return msg;
     },
 
