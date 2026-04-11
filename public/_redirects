@@ -1,0 +1,5 @@
+# SPA fallback for Render static sites. Any path that isn't a real asset
+# falls through to index.html so React Router can handle the route on the
+# client. Render looks for this file in the publish directory (dist/),
+# which Vite populates from public/ on every build.
+/*    /index.html   200

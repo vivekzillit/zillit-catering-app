@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Theme tokens ---------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply relative bg-slate-950 text-slate-100 transition-colors duration-300;
+    background-image:
+      radial-gradient(at 20% 20%, rgba(251, 146, 60, 0.12) 0px, transparent 45%),
+      radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 45%),
+      radial-gradient(at 0% 80%, rgba(236, 72, 153, 0.08) 0px, transparent 45%),
+      linear-gradient(180deg, #0b0f19 0%, #111827 50%, #0b0f19 100%);
+    background-size: 100% 100%;
+  }
+
+  html:not(.dark) body {
+    @apply bg-slate-50 text-slate-900;
+    background-image:
+      radial-gradient(at 20% 20%, rgba(251, 146, 60, 0.10) 0px, transparent 45%),
+      radial-gradient(at 80% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 45%),
+      linear-gradient(180deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+  }
+
+  button {
+    @apply focus:outline-none;
+  }
+
+  * {
+    @apply selection:bg-brand-500/40 selection:text-white;
+  }
+}
+
+/* ---- Component primitives ------------------------------------------- */
+
+@layer components {
+  /* Glass card — used by every surface */
+  .glass {
+    @apply rounded-2xl border backdrop-blur-xl shadow-glass;
+    @apply bg-white/5 border-white/10;
+  }
+  html:not(.dark) .glass {
+    @apply bg-white/70 border-slate-200/60 shadow-glass-light;
+  }
+
+  /* Softer variant for chat bubbles / nested items */
+  .glass-subtle {
+    @apply rounded-xl border backdrop-blur-lg;
+    @apply bg-white/[0.03] border-white/5;
+  }
+  html:not(.dark) .glass-subtle {
+    @apply bg-white/50 border-slate-200/40;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-brand-500/20 transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-brand-400/40 bg-brand-500/10 px-4 py-2 text-sm font-semibold text-brand-300 backdrop-blur-lg transition hover:bg-brand-500/20;
+  }
+  html:not(.dark) .btn-secondary {
+    @apply border-brand-400 bg-brand-50 text-brand-600 hover:bg-brand-100;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:bg-white/10;
+  }
+  html:not(.dark) .btn-ghost {
+    @apply text-slate-600 hover:bg-slate-100;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 backdrop-blur-lg transition focus:border-brand-400/60 focus:bg-white/10 focus:ring-2 focus:ring-brand-400/30;
+  }
+  html:not(.dark) .input {
+    @apply border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-brand-400 focus:bg-white focus:ring-brand-200;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300 backdrop-blur-lg transition;
+  }
+  html:not(.dark) .chip {
+    @apply border-slate-200 bg-slate-100/80 text-slate-600;
+  }
+
+  .chip-active {
+    @apply border-brand-400/60 bg-brand-500/20 text-brand-300;
+  }
+  html:not(.dark) .chip-active {
+    @apply border-brand-400 bg-brand-100 text-brand-700;
+  }
+
+  /* Subtle divider line used inside glass cards */
+  .hr-soft {
+    @apply border-white/10;
+  }
+  html:not(.dark) .hr-soft {
+    @apply border-slate-200/60;
+  }
+}
+
+/* ---- Scrollbar styling ----------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
