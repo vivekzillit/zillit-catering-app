@@ -10,6 +10,7 @@ import LoginPage from '@/pages/LoginPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import CateringPage from '@/features/catering/CateringPage';
 import CraftServicePage from '@/features/craftservice/CraftServicePage';
+import ContactDirectory from '@/features/contacts/ContactDirectory';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -52,6 +53,14 @@ export default function App() {
         element={
           <RequireAuth>
             <CraftServicePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/contacts"
+        element={
+          <RequireAuth>
+            <ContactDirectory />
           </RequireAuth>
         }
       />

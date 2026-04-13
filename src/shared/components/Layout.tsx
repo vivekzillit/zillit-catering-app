@@ -4,7 +4,7 @@
 import { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
-import { LogOut, Utensils, Coffee } from 'lucide-react';
+import { LogOut, Utensils, Coffee, Contact } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -73,6 +73,19 @@ export function Layout({ children }: LayoutProps) {
                 {user?.role ?? ''}
               </p>
             </div>
+            <NavLink
+              to="/contacts"
+              className={({ isActive }) =>
+                clsx(
+                  'btn-ghost',
+                  isActive && 'bg-white/10 text-brand-300'
+                )
+              }
+              title="Contacts"
+              aria-label="Contacts"
+            >
+              <Contact className="h-4 w-4" />
+            </NavLink>
             <ThemeToggle />
             <button
               type="button"
