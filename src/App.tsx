@@ -11,6 +11,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import CateringPage from '@/features/catering/CateringPage';
 import CraftServicePage from '@/features/craftservice/CraftServicePage';
 import ContactDirectory from '@/features/contacts/ContactDirectory';
+import CallSheetView from '@/features/callsheet/CallSheetView';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -53,6 +54,14 @@ export default function App() {
         element={
           <RequireAuth>
             <CraftServicePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/callsheet"
+        element={
+          <RequireAuth>
+            <CallSheetView />
           </RequireAuth>
         }
       />
