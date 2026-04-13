@@ -19,6 +19,8 @@ export interface User {
   deviceId?: string;
   projectId?: string;
   avatar?: string;
+  phone?: string;       // Zillit internal phone
+  gsmPhone?: string;    // personal GSM number
 }
 
 export interface LoginResponse {

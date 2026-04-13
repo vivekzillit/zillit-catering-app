@@ -68,6 +68,8 @@ interface RootState {
 
   // mutations
   setActiveUnit: (moduleId: ModuleId, unitId: string) => void;
+  createUnit: (moduleId: ModuleId, name: string) => Promise<void>;
+  deleteUnit: (moduleId: ModuleId, unitId: string) => Promise<void>;
   createMenuItem: (moduleId: ModuleId, req: CreateMenuItemRequest) => Promise<MenuItem>;
   updateMenuItem: (moduleId: ModuleId, id: string, req: UpdateMenuItemRequest) => Promise<MenuItem>;
   deleteMenuItem: (moduleId: ModuleId, id: string) => Promise<void>;
@@ -228,6 +230,28 @@ export const useModuleStore = create<RootState>((set, get) => {
 
     setActiveUnit(moduleId, unitId) {
       set((s) => patch(s, moduleId, () => ({ activeUnitId: unitId })));
+    },
+
+    async createUnit(moduleId, name) {
+      const unit = await unitsApi.createUnit(moduleId, name);
+      set((s) =>
+        patch(s, moduleId, (cur) => ({
+          units: [...cur.units, unit],
+          activeUnitId: unit._id || cur.activeUnitId,
+        }))
+      );
+    },
+
+    async deleteUnit(moduleId, unitId) {
+      await unitsApi.deleteUnit(moduleId, unitId);
+      set((s) =>
+        patch(s, moduleId, (cur) => ({
+          units: cur.units.filter((u) => u._id !== unitId),
+          activeUnitId: cur.activeUnitId === unitId
+            ? cur.units.find((u) => u._id !== unitId)?._id ?? ''
+            : cur.activeUnitId,
+        }))
+      );
     },
 
     async createMenuItem(moduleId, req) {

@@ -17,6 +17,24 @@ export async function fetchUnits(moduleId: ModuleId): Promise<Unit[]> {
   return cc<Unit[]>(data.data) ?? [];
 }
 
+export async function createUnit(
+  moduleId: ModuleId,
+  unitName: string
+): Promise<Unit> {
+  const { data } = await api.post<Envelope<unknown>>(`/${moduleId}/unit`, {
+    unit_name: unitName,
+    identifier: unitName.toLowerCase().replace(/\s+/g, '_'),
+  });
+  return cc<Unit>(data.data);
+}
+
+export async function deleteUnit(
+  moduleId: ModuleId,
+  unitId: string
+): Promise<void> {
+  await api.delete(`/${moduleId}/unit/${unitId}`);
+}
+
 /**
  * Fetch the team members for a unit (used by the compose UI's
  * "Select User" dropdown when a caterer wants to direct-message someone).
