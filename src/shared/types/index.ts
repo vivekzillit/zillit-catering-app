@@ -257,6 +257,68 @@ export interface PostCommentRequest {
   attachment?: Attachment;
 }
 
+// ---------- Orders ----------
+
+export type OrderStatus = 'pending' | 'accepted' | 'preparing' | 'ready' | 'served' | 'cancelled';
+export type OrderPriority = 'normal' | 'vip';
+
+export interface OrderItem {
+  menuItemId: string;
+  name: string;
+  category?: string;
+}
+
+export interface Order {
+  _id: string;
+  module?: ModuleId;
+  unitId: string;
+  projectId?: string;
+  userId: string;
+  userName: string;
+  userDepartment?: string;
+  userRole?: string;
+  items: OrderItem[];
+  notes?: string;
+  status: OrderStatus;
+  priority: OrderPriority;
+  notifiedReadyAt?: number;
+  servedAt?: number;
+  created?: number;
+  updated?: number;
+}
+
+export interface PlaceOrderRequest {
+  unitId: string;
+  items: OrderItem[];
+  notes?: string;
+}
+
+export interface OrderSummary {
+  perItem: { name: string; category: string; count: number; users: string[] }[];
+  perPerson: {
+    _id: string;
+    userId: string;
+    userName: string;
+    userDepartment: string;
+    userRole: string;
+    priority: OrderPriority;
+    items: OrderItem[];
+    notes: string;
+    status: OrderStatus;
+    created: number;
+    servedAt: number;
+  }[];
+  totalOrders: number;
+}
+
+export interface OrderStats {
+  totalReceived: number;
+  totalServed: number;
+  remaining: number;
+  lastServedAt: number;
+  lastServedUserName: string;
+}
+
 // ---------- Upload ----------
 
 export interface UploadResponse {

@@ -1,18 +1,20 @@
 // MenuListView — search, filter, and grid of menu items for the active unit.
-// Supports a "select mode" for posting a multi-item poll to the unit's chat.
+//
+// Caterers:  CRUD controls (New / Edit / Delete)
+// Members:   "Add to Order" button on each card → builds a cart → OrderCart
+//            bottom sheet to review + submit
 
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
-import { Plus, Search, CheckSquare, Square, Send, Loader2, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Pencil, Plus, Search, ShoppingBag, Trash2 } from 'lucide-react';
 import type { DietaryTag, MenuItem, ModuleId } from '@/shared/types';
 import { DIETARY_TAGS, DIETARY_TAG_LABELS } from '@/shared/types';
 import { humanizeLabel } from '@/shared/utils/date';
-import { resolveAssetUrl } from '@/shared/utils/assetUrl';
 import { useModuleStore, useModuleState } from '../stores/moduleStore';
 import { MenuItemForm } from './MenuItemForm';
 import { MenuItemDetailSheet } from './MenuItemDetailSheet';
-import { selectIsAdmin } from '@/shared/stores/authStore';
-import { useAuthStore } from '@/shared/stores/authStore';
+import { OrderCart } from './OrderCart';
+import { selectIsAdmin, useAuthStore } from '@/shared/stores/authStore';
 
 interface MenuListViewProps {
   moduleId: ModuleId;
@@ -20,18 +22,17 @@ interface MenuListViewProps {
 
 export function MenuListView({ moduleId }: MenuListViewProps) {
   const { menuItems, loadingMenu, activeUnitId, units } = useModuleState(moduleId);
-  const postMenuPoll = useModuleStore((s) => s.postMenuPoll);
   const deleteMenuItem = useModuleStore((s) => s.deleteMenuItem);
   const isAdmin = useAuthStore(selectIsAdmin);
 
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState<DietaryTag | null>(null);
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [formOpen, setFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
-  const [postingPoll, setPostingPoll] = useState(false);
+
+  // Cart state — for members to build an order
+  const [cart, setCart] = useState<Map<string, { item: MenuItem; qty: number }>>(new Map());
 
   const activeUnit = units.find((u) => u._id === activeUnitId);
   const unitLabel = humanizeLabel(activeUnit?.unitName) || 'this unit';
@@ -48,36 +49,37 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
     });
   }, [menuItems, search, tagFilter]);
 
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  function addToCart(item: MenuItem) {
+    setCart((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(item._id);
+      if (existing) {
+        next.set(item._id, { ...existing, qty: existing.qty + 1 });
+      } else {
+        next.set(item._id, { item, qty: 1 });
+      }
       return next;
     });
   }
 
-  function exitSelectMode() {
-    setSelectMode(false);
-    setSelectedIds(new Set());
+  function updateCartQty(menuItemId: string, qty: number) {
+    setCart((prev) => {
+      const next = new Map(prev);
+      if (qty <= 0) next.delete(menuItemId);
+      else {
+        const existing = next.get(menuItemId);
+        if (existing) next.set(menuItemId, { ...existing, qty });
+      }
+      return next;
+    });
   }
 
-  async function handlePostPoll() {
-    if (selectedIds.size === 0 || !activeUnitId) return;
-    const itemsToPost = menuItems.filter((m) => selectedIds.has(m._id));
-    setPostingPoll(true);
-    try {
-      await postMenuPoll(moduleId, itemsToPost, activeUnitId, activeUnit?.unitName ?? 'menu');
-      exitSelectMode();
-    } catch (err) {
-      console.error('postMenuPoll failed', err);
-    } finally {
-      setPostingPoll(false);
-    }
+  function clearCart() {
+    setCart(new Map());
   }
 
   async function handleDelete(item: MenuItem) {
-    if (!confirm(`Delete “${item.name}”?`)) return;
+    if (!confirm(`Delete "${item.name}"?`)) return;
     try {
       await deleteMenuItem(moduleId, item._id);
     } catch (err) {
@@ -97,29 +99,18 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
           </div>
           <div className="flex items-center gap-2">
             {isAdmin ? (
-              <>
-                <button
-                  type="button"
-                  className={clsx('btn-ghost', selectMode && 'bg-white/10 text-slate-100')}
-                  onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
-                  disabled={menuItems.length === 0}
-                >
-                  {selectMode ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                  {selectMode ? 'Cancel' : 'Select'}
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => {
-                    setEditingItem(null);
-                    setFormOpen(true);
-                  }}
-                  disabled={!activeUnitId}
-                >
-                  <Plus className="h-4 w-4" />
-                  New
-                </button>
-              </>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setEditingItem(null);
+                  setFormOpen(true);
+                }}
+                disabled={!activeUnitId}
+              >
+                <Plus className="h-4 w-4" />
+                New
+              </button>
             ) : null}
           </div>
         </div>
@@ -186,57 +177,33 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((item) => {
-              const selected = selectedIds.has(item._id);
-              const firstImage = item.images?.[0];
+              const cartEntry = cart.get(item._id);
+              const inCart = !!cartEntry;
               return (
                 <div
                   key={item._id}
                   className={clsx(
-                    'glass-subtle group flex flex-col gap-2 overflow-hidden p-0 transition',
+                    'glass-subtle group flex flex-col gap-2 p-4 transition',
                     'hover:border-brand-400/40 hover:shadow-lg hover:shadow-brand-500/10',
-                    selected && 'ring-2 ring-brand-400/60'
+                    inCart && 'ring-2 ring-brand-400/60'
                   )}
-                  onClick={() => {
-                    if (selectMode) toggleSelect(item._id);
-                    else setDetailItem(item);
-                  }}
+                  onClick={() => setDetailItem(item)}
                   role="button"
                   tabIndex={0}
                 >
-                  {firstImage?.url || firstImage?.thumbnail ? (
-                    <div className="relative h-32 w-full overflow-hidden bg-slate-900">
-                      <img
-                        src={resolveAssetUrl(firstImage.thumbnail || firstImage.url)}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                      {selectMode ? (
-                        <div className="absolute right-2 top-2">
-                          {selected ? (
-                            <CheckSquare className="h-5 w-5 text-brand-400 drop-shadow-md" />
-                          ) : (
-                            <Square className="h-5 w-5 text-white drop-shadow-md" />
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-col gap-2 px-4 pt-4 last:pb-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-slate-100">{item.name}</h3>
+                      <h3 className="truncate text-sm font-semibold text-slate-100">
+                        {item.name}
+                      </h3>
                       {item.category ? (
                         <p className="truncate text-xs text-slate-400">{item.category}</p>
                       ) : null}
                     </div>
-                    {selectMode && !firstImage ? (
-                      selected ? (
-                        <CheckSquare className="h-5 w-5 flex-shrink-0 text-brand-400" />
-                      ) : (
-                        <Square className="h-5 w-5 flex-shrink-0 text-slate-500" />
-                      )
+                    {inCart ? (
+                      <span className="flex-shrink-0 rounded bg-brand-500/20 px-1.5 py-0.5 text-[10px] font-bold text-brand-300">
+                        x{cartEntry.qty}
+                      </span>
                     ) : null}
                   </div>
 
@@ -257,35 +224,45 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
                     </div>
                   ) : null}
 
-                  {isAdmin && !selectMode ? (
-                    <div className="mt-auto flex items-center gap-1 pb-4 pt-2 opacity-0 transition group-hover:opacity-100">
+                  {/* Action row */}
+                  <div className="mt-auto flex items-center justify-between gap-1 pt-2">
+                    {isAdmin ? (
+                      <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                        <button
+                          type="button"
+                          className="btn-ghost h-7 px-2 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingItem(item);
+                            setFormOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-ghost h-7 px-2 text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(item);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </button>
+                      </div>
+                    ) : (
                       <button
                         type="button"
-                        className="btn-ghost h-7 px-2 text-xs"
+                        className="btn-secondary h-7 px-2 text-xs"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEditingItem(item);
-                          setFormOpen(true);
+                          addToCart(item);
                         }}
                       >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Edit
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                        {inCart ? 'Add Another' : 'Add to Order'}
                       </button>
-                      <button
-                        type="button"
-                        className="btn-ghost h-7 px-2 text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(item);
-                        }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Delete
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="pb-4" />
-                  )}
+                    )}
                   </div>
                 </div>
               );
@@ -294,25 +271,20 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
         )}
       </div>
 
-      {selectMode ? (
-        <footer className="flex items-center justify-between border-t hr-soft px-5 py-3">
-          <span className="text-xs text-slate-400">
-            {selectedIds.size} selected • will post a poll to {unitLabel}
-          </span>
-          <button
-            type="button"
-            className="btn-primary"
-            disabled={selectedIds.size === 0 || postingPoll}
-            onClick={handlePostPoll}
-          >
-            {postingPoll ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-            Post {selectedIds.size} as Poll
-          </button>
-        </footer>
+      {/* Member order cart — sticky bottom bar */}
+      {!isAdmin && activeUnitId ? (
+        <div className="border-t hr-soft px-5 py-3">
+          <OrderCart
+            moduleId={moduleId}
+            unitId={activeUnitId}
+            cart={cart}
+            onUpdateQty={updateCartQty}
+            onClear={clearCart}
+            onOrderPlaced={() => {
+              // Cart is cleared by the callback; nothing else needed here
+            }}
+          />
+        </div>
       ) : null}
 
       {formOpen ? (
