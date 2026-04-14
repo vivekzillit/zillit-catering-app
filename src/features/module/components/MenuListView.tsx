@@ -176,7 +176,33 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {filtered.map((item) => {
+            {(() => {
+              // Group items by category, preserving original order within each group.
+              // Items without a category go into an "Other" bucket at the end.
+              const groups: { category: string; items: MenuItem[] }[] = [];
+              const seen = new Map<string, MenuItem[]>();
+              for (const item of filtered) {
+                const cat = item.category?.trim() || '';
+                if (!seen.has(cat)) {
+                  const arr: MenuItem[] = [];
+                  seen.set(cat, arr);
+                  groups.push({ category: cat, items: arr });
+                }
+                seen.get(cat)!.push(item);
+              }
+              return groups.map((group) => (
+                <div key={group.category || '__none__'}>
+                  {group.category ? (
+                    <div className="mb-1 mt-3 flex items-center gap-3 first:mt-0">
+                      <h4 className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-brand-400">
+                        {group.category}
+                      </h4>
+                      <div className="h-px flex-1 bg-white/10" />
+                      <span className="text-[10px] text-slate-500">{group.items.length}</span>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-col gap-1.5">
+                    {group.items.map((item) => {
               const cartEntry = cart.get(item._id);
               const inCart = !!cartEntry;
               return (
@@ -247,6 +273,10 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
                 </div>
               );
             })}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         )}
       </div>
