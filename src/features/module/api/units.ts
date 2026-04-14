@@ -19,12 +19,19 @@ export async function fetchUnits(moduleId: ModuleId): Promise<Unit[]> {
 
 export async function createUnit(
   moduleId: ModuleId,
-  unitName: string
+  unitName: string,
+  startTime?: string,
+  endTime?: string,
+  servingLocation?: string
 ): Promise<Unit> {
-  const { data } = await api.post<Envelope<unknown>>(`/${moduleId}/unit`, {
+  const body: Record<string, string> = {
     unit_name: unitName,
     identifier: unitName.toLowerCase().replace(/\s+/g, '_'),
-  });
+  };
+  if (startTime) body.start_time = startTime;
+  if (endTime) body.end_time = endTime;
+  if (servingLocation) body.serving_location = servingLocation;
+  const { data } = await api.post<Envelope<unknown>>(`/${moduleId}/unit`, body);
   return cc<Unit>(data.data);
 }
 

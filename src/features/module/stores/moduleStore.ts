@@ -68,7 +68,7 @@ interface RootState {
 
   // mutations
   setActiveUnit: (moduleId: ModuleId, unitId: string) => void;
-  createUnit: (moduleId: ModuleId, name: string) => Promise<void>;
+  createUnit: (moduleId: ModuleId, name: string, startTime?: string, endTime?: string, servingLocation?: string) => Promise<void>;
   deleteUnit: (moduleId: ModuleId, unitId: string) => Promise<void>;
   createMenuItem: (moduleId: ModuleId, req: CreateMenuItemRequest) => Promise<MenuItem>;
   updateMenuItem: (moduleId: ModuleId, id: string, req: UpdateMenuItemRequest) => Promise<MenuItem>;
@@ -232,8 +232,8 @@ export const useModuleStore = create<RootState>((set, get) => {
       set((s) => patch(s, moduleId, () => ({ activeUnitId: unitId })));
     },
 
-    async createUnit(moduleId, name) {
-      const unit = await unitsApi.createUnit(moduleId, name);
+    async createUnit(moduleId, name, startTime, endTime, servingLocation) {
+      const unit = await unitsApi.createUnit(moduleId, name, startTime, endTime, servingLocation);
       set((s) =>
         patch(s, moduleId, (cur) => ({
           units: [...cur.units, unit],

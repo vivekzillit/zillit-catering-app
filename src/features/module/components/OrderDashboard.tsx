@@ -120,6 +120,21 @@ export function OrderDashboard({ moduleId }: OrderDashboardProps) {
         </button>
       </header>
 
+      {/* Always-visible stats summary bar */}
+      {stats ? (
+        <div className="flex items-center justify-around border-b hr-soft px-5 py-2">
+          <MiniStat label="Received" value={stats.totalReceived} color="text-blue-300" />
+          <MiniStat label="Served" value={stats.totalServed} color="text-green-300" />
+          <MiniStat label="Remaining" value={stats.remaining} color={stats.remaining > 0 ? 'text-yellow-300' : 'text-slate-400'} />
+          {stats.lastServedAt > 0 ? (
+            <div className="text-center">
+              <p className="text-xs font-bold text-slate-100">{formatShortTime(stats.lastServedAt)}</p>
+              <p className="text-[9px] uppercase tracking-wider text-slate-500">Last Served</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* Tab bar */}
       <div className="flex items-center gap-1 border-b hr-soft px-5 py-2">
         {(['orders', 'items', 'stats'] as Tab[]).map((t) => (
@@ -362,6 +377,15 @@ function StatCard({
       {icon ?? null}
       <p className="text-2xl font-bold text-slate-100">{value}</p>
       <p className="text-[10px] uppercase tracking-wider text-slate-400">{label}</p>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="text-center">
+      <p className={clsx('text-lg font-bold', color)}>{value}</p>
+      <p className="text-[9px] uppercase tracking-wider text-slate-500">{label}</p>
     </div>
   );
 }

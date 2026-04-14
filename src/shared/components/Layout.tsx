@@ -2,11 +2,13 @@
 // (Catering / Craft Service), theme toggle, and sign-out button.
 
 import { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { LogOut, Utensils, Coffee, Contact, FileText } from 'lucide-react';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { ThemeToggle } from './ThemeToggle';
+import { NotificationBell } from './NotificationBell';
+import { NotificationToast } from './NotificationToast';
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,6 +23,8 @@ export function Layout({ children }: LayoutProps) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentModule = location.pathname.startsWith('/craftservice') ? 'craftservice' : 'catering';
 
   function handleLogout() {
     logout();
@@ -73,6 +77,7 @@ export function Layout({ children }: LayoutProps) {
                 {user?.role ?? ''}
               </p>
             </div>
+            <NotificationBell moduleId={currentModule} />
             <NavLink
               to="/callsheet"
               className={({ isActive }) =>
@@ -132,6 +137,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       <main className="relative mx-auto w-full max-w-7xl flex-1 px-4 py-4">{children}</main>
+      <NotificationToast />
     </div>
   );
 }

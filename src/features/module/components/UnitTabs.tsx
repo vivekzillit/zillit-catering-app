@@ -39,19 +39,31 @@ export function UnitTabs({ moduleId }: UnitTabsProps) {
         units.map((unit) => {
           const label = humanizeLabel(unit.unitName) || unit.unitName;
           const active = unit._id === activeUnitId;
+          const hasTime = unit.startTime || unit.endTime;
+          const timeStr = hasTime
+            ? `${unit.startTime || '?'}${unit.endTime ? ` – ${unit.endTime}` : ''}`
+            : null;
           return (
             <button
               key={unit._id}
               type="button"
               onClick={() => setActiveUnit(moduleId, unit._id)}
               className={clsx(
-                'whitespace-nowrap rounded-xl px-4 py-1.5 text-sm font-semibold transition',
+                'flex flex-col items-center whitespace-nowrap rounded-xl px-4 py-1.5 transition',
                 active
                   ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
                   : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
               )}
             >
-              {label}
+              <span className="text-sm font-semibold">{label}</span>
+              {timeStr ? (
+                <span className={clsx(
+                  'text-[10px]',
+                  active ? 'text-white/70' : 'text-slate-500'
+                )}>
+                  {timeStr}
+                </span>
+              ) : null}
             </button>
           );
         })

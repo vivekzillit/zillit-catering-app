@@ -40,6 +40,9 @@ export interface Unit {
   isUnitHead?: boolean;
   systemDefined?: boolean;
   projectId?: string;
+  startTime?: string;          // "08:00"
+  endTime?: string;            // "09:00"
+  servingLocation?: string;    // "Car/Catering Base"
   teamMembers?: { userId: string; enabled: boolean }[];
 }
 
