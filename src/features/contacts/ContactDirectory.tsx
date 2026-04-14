@@ -2,7 +2,6 @@
 // and quick-action buttons for calling and starting a 1:1 chat.
 
 import { useCallback, useEffect, useState } from 'react';
-import clsx from 'clsx';
 import { Loader2, MessageSquare, Phone, PhoneCall, Users } from 'lucide-react';
 import type { User } from '@/shared/types';
 import { useAuthStore } from '@/shared/stores/authStore';
@@ -160,16 +159,25 @@ function ContactCard({ contact, onChat }: { contact: User; onChat: () => void })
         </p>
       </div>
       <div className="flex items-center gap-1">
+        {/* Zillit phone — always visible, dimmed if no number */}
         {contact.phone ? (
           <a
             href={`tel:${contact.phone}`}
-            className={clsx('btn-ghost h-8 w-8 !p-0 text-green-400 hover:bg-green-500/10')}
+            className="btn-ghost h-8 w-8 !p-0 text-green-400 hover:bg-green-500/10"
             title={`Zillit: ${contact.phone}`}
             aria-label="Call Zillit number"
           >
             <Phone className="h-4 w-4" />
           </a>
-        ) : null}
+        ) : (
+          <span
+            className="btn-ghost h-8 w-8 !p-0 cursor-not-allowed text-slate-600"
+            title="No Zillit number set"
+          >
+            <Phone className="h-4 w-4" />
+          </span>
+        )}
+        {/* GSM phone — always visible, dimmed if no number */}
         {contact.gsmPhone ? (
           <a
             href={`tel:${contact.gsmPhone}`}
@@ -179,7 +187,15 @@ function ContactCard({ contact, onChat }: { contact: User; onChat: () => void })
           >
             <PhoneCall className="h-4 w-4" />
           </a>
-        ) : null}
+        ) : (
+          <span
+            className="btn-ghost h-8 w-8 !p-0 cursor-not-allowed text-slate-600"
+            title="No GSM number set"
+          >
+            <PhoneCall className="h-4 w-4" />
+          </span>
+        )}
+        {/* Chat — always active */}
         <button
           type="button"
           className="btn-ghost h-8 w-8 !p-0 text-brand-400 hover:bg-brand-500/10"

@@ -122,14 +122,32 @@ export function OrderDashboard({ moduleId }: OrderDashboardProps) {
 
       {/* Always-visible stats summary bar */}
       {stats ? (
-        <div className="flex items-center justify-around border-b hr-soft px-5 py-2">
-          <MiniStat label="Received" value={stats.totalReceived} color="text-blue-300" />
-          <MiniStat label="Served" value={stats.totalServed} color="text-green-300" />
-          <MiniStat label="Remaining" value={stats.remaining} color={stats.remaining > 0 ? 'text-yellow-300' : 'text-slate-400'} />
+        <div className="border-b hr-soft px-5 py-2">
+          <div className="flex items-center justify-around">
+            <MiniStat label="Received" value={stats.totalReceived} color="text-blue-300" />
+            <MiniStat label="Served" value={stats.totalServed} color="text-green-300" />
+            <MiniStat label="Remaining" value={stats.remaining} color={stats.remaining > 0 ? 'text-yellow-300' : 'text-slate-400'} />
+          </div>
+          {/* Last person in line — prominent banner */}
           {stats.lastServedAt > 0 ? (
-            <div className="text-center">
-              <p className="text-xs font-bold text-slate-100">{formatShortTime(stats.lastServedAt)}</p>
-              <p className="text-[9px] uppercase tracking-wider text-slate-500">Last Served</p>
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-1.5">
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-green-400" />
+                <span className="text-[10px] uppercase tracking-wider text-slate-400">Last person served</span>
+              </div>
+              <span className="text-xs font-semibold text-green-300">
+                {stats.lastServedUserName} at {formatShortTime(stats.lastServedAt)}
+              </span>
+            </div>
+          ) : stats.totalReceived > 0 ? (
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-3 py-1.5">
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-yellow-400" />
+                <span className="text-[10px] uppercase tracking-wider text-slate-400">Last person in line</span>
+              </div>
+              <span className="text-xs font-semibold text-yellow-300">
+                {stats.remaining} waiting
+              </span>
             </div>
           ) : null}
         </div>
