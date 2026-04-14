@@ -175,7 +175,7 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
             ) : null}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="flex flex-col gap-2">
             {filtered.map((item) => {
               const cartEntry = cart.get(item._id);
               const inCart = !!cartEntry;
@@ -183,7 +183,7 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
                 <div
                   key={item._id}
                   className={clsx(
-                    'glass-subtle group flex flex-col gap-2 p-4 transition',
+                    'glass-subtle group flex items-center justify-between gap-2 rounded-xl px-4 py-3 transition',
                     'hover:border-brand-400/40 hover:shadow-lg hover:shadow-brand-500/10',
                     inCart && 'ring-2 ring-brand-400/60'
                   )}
@@ -191,15 +191,10 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-slate-100">
-                        {item.name}
-                      </h3>
-                      {item.category ? (
-                        <p className="truncate text-xs text-slate-400">{item.category}</p>
-                      ) : null}
-                    </div>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <h3 className="truncate text-sm font-semibold text-slate-100">
+                      {item.name}
+                    </h3>
                     {inCart ? (
                       <span className="flex-shrink-0 rounded bg-brand-500/20 px-1.5 py-0.5 text-[10px] font-bold text-brand-300">
                         x{cartEntry.qty}
@@ -207,49 +202,34 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
                     ) : null}
                   </div>
 
-                  {item.description ? (
-                    <p className="line-clamp-2 text-xs text-slate-400">{item.description}</p>
-                  ) : null}
-
-                  {item.dietaryTags && item.dietaryTags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {item.dietaryTags.slice(0, 3).map((t) => (
-                        <span key={t} className="chip">
-                          {DIETARY_TAG_LABELS[t]}
-                        </span>
-                      ))}
-                      {item.dietaryTags.length > 3 ? (
-                        <span className="chip">+{item.dietaryTags.length - 3}</span>
-                      ) : null}
-                    </div>
-                  ) : null}
-
                   {/* Action row */}
-                  <div className="mt-auto flex items-center justify-between gap-1 pt-2">
+                  <div className="flex flex-shrink-0 items-center gap-1">
                     {isAdmin ? (
-                      <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                      <>
                         <button
                           type="button"
-                          className="btn-ghost h-7 px-2 text-xs"
+                          className="rounded-lg p-1.5 text-slate-400 opacity-0 transition hover:bg-white/10 hover:text-slate-200 group-hover:opacity-100"
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingItem(item);
                             setFormOpen(true);
                           }}
+                          title="Edit"
                         >
-                          <Pencil className="h-3.5 w-3.5" /> Edit
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
                           type="button"
-                          className="btn-ghost h-7 px-2 text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                          className="rounded-lg p-1.5 text-red-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-300 group-hover:opacity-100"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDelete(item);
                           }}
+                          title="Delete"
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
-                      </div>
+                      </>
                     ) : (
                       <button
                         type="button"
@@ -260,7 +240,7 @@ export function MenuListView({ moduleId }: MenuListViewProps) {
                         }}
                       >
                         <ShoppingBag className="h-3.5 w-3.5" />
-                        {inCart ? 'Add Another' : 'Add to Order'}
+                        {inCart ? '+1' : 'Add'}
                       </button>
                     )}
                   </div>
