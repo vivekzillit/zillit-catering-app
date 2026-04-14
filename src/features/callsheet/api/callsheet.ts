@@ -51,6 +51,13 @@ export async function fetchLatestCallSheet(): Promise<CallSheetData | null> {
   return result?._id ? result : null;
 }
 
+export async function createManualCallSheet(
+  fields: Partial<CallSheetData>
+): Promise<CallSheetData> {
+  const { data } = await api.post<Envelope<unknown>>('/callsheet/manual', fields);
+  return cc<CallSheetData>(data.data);
+}
+
 export async function updateCallSheet(
   id: string,
   updates: Partial<CallSheetData>

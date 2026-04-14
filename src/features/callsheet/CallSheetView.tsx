@@ -76,6 +76,15 @@ export default function CallSheetView() {
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
               Upload PDF
             </button>
+            {!cs && !editing ? (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil className="h-4 w-4" /> Fill Manually
+              </button>
+            ) : null}
             {cs && !editing ? (
               <button
                 type="button"
@@ -93,11 +102,36 @@ export default function CallSheetView() {
         <div className="flex items-center justify-center py-20 text-sm text-slate-400">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
         </div>
+      ) : editing && !cs ? (
+        // Manual entry mode — no call sheet uploaded yet, caterer fills from scratch
+        <EditMode
+          callSheet={{
+            _id: '',
+            projectId: '',
+            shootDay: 0,
+            date: '',
+            productionName: '',
+            meals: [
+              { type: 'breakfast', startTime: '', endTime: '', location: '', notes: '' },
+              { type: 'lunch', startTime: '', endTime: '', location: '', notes: '' },
+            ],
+            wrapTime: '',
+            unitCall: '',
+            estimatedHeadcount: 0,
+            cateringBase: '',
+            crewContacts: [],
+            sourceFileName: '',
+            created: 0,
+          }}
+          onSave={(updated) => { setCs(updated); setEditing(false); }}
+          onCancel={() => setEditing(false)}
+          isNew
+        />
       ) : !cs ? (
         <Glass className="p-8 text-center">
           <p className="text-sm text-slate-400">
             No call sheet uploaded yet.
-            {isAdmin ? ' Upload a PDF to get started.' : ' Ask a caterer to upload the call sheet.'}
+            {isAdmin ? ' Upload a PDF or fill manually.' : ' Ask a caterer to upload the call sheet.'}
           </p>
         </Glass>
       ) : editing ? (
@@ -199,10 +233,12 @@ function EditMode({
   callSheet: cs,
   onSave,
   onCancel,
+  isNew,
 }: {
   callSheet: CallSheetData;
   onSave: (updated: CallSheetData) => void;
   onCancel: () => void;
+  isNew?: boolean;
 }) {
   const [form, setForm] = useState({
     shootDay: cs.shootDay,
@@ -226,10 +262,12 @@ function EditMode({
   async function handleSave() {
     setSaving(true);
     try {
-      const updated = await csApi.updateCallSheet(cs._id, form);
+      const updated = isNew
+        ? await csApi.createManualCallSheet(form)
+        : await csApi.updateCallSheet(cs._id, form);
       onSave(updated);
     } catch (err) {
-      console.error('updateCallSheet failed', err);
+      console.error('saveCallSheet failed', err);
     } finally {
       setSaving(false);
     }
