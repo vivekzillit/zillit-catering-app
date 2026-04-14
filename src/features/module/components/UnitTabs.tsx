@@ -1,14 +1,15 @@
 // UnitTabs — horizontal pill row that switches the active unit within a
-// module. Caterers see a "+" button at the end to create new units.
+// module. Caterers see edit/delete on hover + a "+" button at the end.
 
 import { useState } from 'react';
 import clsx from 'clsx';
-import { Plus } from 'lucide-react';
-import type { ModuleId } from '@/shared/types';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import type { ModuleId, Unit } from '@/shared/types';
 import { humanizeLabel } from '@/shared/utils/date';
 import { useModuleStore, useModuleState } from '../stores/moduleStore';
 import { useAuthStore, selectIsAdmin } from '@/shared/stores/authStore';
 import { CreateUnitModal } from './CreateUnitModal';
+import { EditUnitModal } from './EditUnitModal';
 
 interface UnitTabsProps {
   moduleId: ModuleId;
@@ -17,8 +18,10 @@ interface UnitTabsProps {
 export function UnitTabs({ moduleId }: UnitTabsProps) {
   const { units, activeUnitId, loadingUnits } = useModuleState(moduleId);
   const setActiveUnit = useModuleStore((s) => s.setActiveUnit);
+  const deleteUnit = useModuleStore((s) => s.deleteUnit);
   const isAdmin = useAuthStore(selectIsAdmin);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
 
   if (loadingUnits && units.length === 0) {
     return (
@@ -27,6 +30,16 @@ export function UnitTabs({ moduleId }: UnitTabsProps) {
         <span className="text-sm text-slate-400">Loading units…</span>
       </div>
     );
+  }
+
+  async function handleDelete(e: React.MouseEvent, unit: Unit) {
+    e.stopPropagation();
+    if (!confirm(`Delete "${humanizeLabel(unit.unitName) || unit.unitName}"?`)) return;
+    try {
+      await deleteUnit(moduleId, unit._id);
+    } catch (err) {
+      console.error('deleteUnit failed', err);
+    }
   }
 
   return (
@@ -44,27 +57,52 @@ export function UnitTabs({ moduleId }: UnitTabsProps) {
             ? `${unit.startTime || '?'}${unit.endTime ? ` – ${unit.endTime}` : ''}`
             : null;
           return (
-            <button
-              key={unit._id}
-              type="button"
-              onClick={() => setActiveUnit(moduleId, unit._id)}
-              className={clsx(
-                'flex flex-col items-center whitespace-nowrap rounded-xl px-4 py-1.5 transition',
-                active
-                  ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
-                  : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
-              )}
-            >
-              <span className="text-sm font-semibold">{label}</span>
-              {timeStr ? (
-                <span className={clsx(
-                  'text-[10px]',
-                  active ? 'text-white/70' : 'text-slate-500'
-                )}>
-                  {timeStr}
-                </span>
+            <div key={unit._id} className="group relative flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveUnit(moduleId, unit._id)}
+                className={clsx(
+                  'flex flex-col items-center whitespace-nowrap rounded-xl px-4 py-1.5 transition',
+                  active
+                    ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                    : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                )}
+              >
+                <span className="text-sm font-semibold">{label}</span>
+                {timeStr ? (
+                  <span className={clsx(
+                    'text-[10px]',
+                    active ? 'text-white/70' : 'text-slate-500'
+                  )}>
+                    {timeStr}
+                  </span>
+                ) : null}
+              </button>
+
+              {/* Edit + Delete icons — visible on hover for caterers */}
+              {isAdmin ? (
+                <div className="absolute -right-1 -top-1 flex items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setEditingUnit(unit); }}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-slate-300 shadow hover:bg-brand-500 hover:text-white"
+                    title="Edit unit"
+                    aria-label="Edit unit"
+                  >
+                    <Pencil className="h-2.5 w-2.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDelete(e, unit)}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-red-400 shadow hover:bg-red-500 hover:text-white"
+                    title="Delete unit"
+                    aria-label="Delete unit"
+                  >
+                    <Trash2 className="h-2.5 w-2.5" />
+                  </button>
+                </div>
               ) : null}
-            </button>
+            </div>
           );
         })
       )}
@@ -86,6 +124,15 @@ export function UnitTabs({ moduleId }: UnitTabsProps) {
           moduleId={moduleId}
           open={createOpen}
           onClose={() => setCreateOpen(false)}
+        />
+      ) : null}
+
+      {editingUnit ? (
+        <EditUnitModal
+          moduleId={moduleId}
+          unit={editingUnit}
+          open={!!editingUnit}
+          onClose={() => setEditingUnit(null)}
         />
       ) : null}
     </div>
